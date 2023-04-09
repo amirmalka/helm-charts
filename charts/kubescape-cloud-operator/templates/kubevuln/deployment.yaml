@@ -71,8 +71,6 @@ spec:
               value: "{{ .Values.logger.level }}"
             - name: KS_LOGGER_NAME
               value: "{{ .Values.logger.name }}"
-            - name: PRINT_POST_JSON
-              value: "{{ .Values.kubevuln.verbose }}"
             {{- range .Values.kubevuln.env }}
             - name: {{ .name  }}
               value: "{{ .value }}"

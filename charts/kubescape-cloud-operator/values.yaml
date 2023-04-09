@@ -115,6 +115,14 @@ kubescapeScheduler:
   # Additional volumeMounts to be mounted on the scan scheduler
   volumeMounts: []
 
+  resources:
+    requests:
+       cpu: 0.000001
+       memory: 2Mi
+    limits:
+       cpu: 0.00001
+       memory: 4Mi
+
 # kubescape scanner - https://github.com/kubescape/kubescape
 kubescape:
 
@@ -126,15 +134,15 @@ kubescape:
   image:
     # -- source code: https://github.com/kubescape/kubescape/tree/master/httphandler (public repo)
     repository: quay.io/kubescape/kubescape
-    tag: v2.2.5
+    tag: v2.2.6
     pullPolicy: Always
 
   resources:
     requests:
-       cpu: 250m
+       cpu: 0.1
        memory: 400Mi
     limits:
-       cpu: 600m
+       cpu: 0.5
        memory: 800Mi
 
   # -- enable host scanner feature: https://hub.armosec.io/docs/host-sensor
@@ -183,7 +191,7 @@ operator:
   image:
     # -- source code: https://github.com/kubescape/operator
     repository: quay.io/kubescape/operator
-    tag: v0.2.34-relevancy
+    tag: v0.2.44-relevancy
     pullPolicy: Always
 
   service:
@@ -194,11 +202,11 @@ operator:
 
   resources:
     requests:
-       cpu: 50m
-       memory: 100Mi
+       cpu: 0.25
+       memory: 250Mi
     limits:
-       cpu: 300m
-       memory: 300Mi
+       cpu: 0.5
+       memory: 500Mi
   env: {}
   labels: {}
 
@@ -241,11 +249,16 @@ kubevulnScheduler:
   # Additional volumeMounts to be mounted on the vuln scan scheduler
   volumeMounts: []
 
+  resources:
+    requests:
+       cpu: 0.000001
+       memory: 2Mi
+    limits:
+       cpu: 0.00001
+       memory: 4Mi
+
 # kubevuln - image vulnerability scanning microservice
 kubevuln:
-
-  # -- for enable:"<any-value>", for disable:"": the print of json posted to the Kubescape cloud from the vuln scanner 
-  verbose: ""
 
   # -- enable/disable kubevuln
   enabled: true
@@ -256,8 +269,8 @@ kubevuln:
   image:
     # -- source code: https://github.com/kubescape/kubevuln
     repository: quay.io/kubescape/kubevuln
-    tag: v0.2.49-relevancy
-    pullPolicy: Always
+    tag: v0.2.66-relevancy
+    pullPolicy: IfNotPresent
 
   replicaCount: 1
 
@@ -270,18 +283,14 @@ kubevuln:
   resources:
     requests:
        cpu: 300m
-       memory: 1000Mi
+       memory: 200Mi
        # Consider to increase ephemeral-storage requests in order to avoid pod eviction due to huge images
        # More details: https://hub.armosec.io/docs/limitations
        #               https://github.com/kubescape/kubescape/issues/389
        ephemeral-storage: 5Gi
     limits:
-       cpu: 500m
-       memory: 5000Mi
-
-  env:
-  - name: CA_MAX_VULN_SCAN_ROUTINES # TODO update the kubevuln
-    value: "1"
+       cpu: 1000m
+       memory: 3000Mi
 
   labels: {}
 
@@ -304,24 +313,20 @@ kollector:
     # -- source code: https://github.com/kubescape/kollector
     repository: quay.io/kubescape/kollector
     tag: v0.1.12
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
   replicaCount: 1
 
   resources:
     requests:
-       cpu: 10m
+       cpu: 0.1
        memory: 40Mi
     limits:
-       cpu: 500m
+       cpu: 0.5
        memory: 500Mi
 
 
   env:
-  # -- print in verbose mode (print all reported data)
-  - name: PRINT_REPORT
-    value: "false"
-
   # -- wait before first report
   - name: WAIT_BEFORE_REPORT
     value: "0"
@@ -363,11 +368,11 @@ gateway:
   replicaCount: 1
   resources:
     requests:
-       cpu: 10m
+       cpu: 0.0001
        memory: 10Mi
     limits:
-       cpu: 100m
-       memory: 50Mi
+       cpu: 0.001
+       memory: 20Mi
 
   env: {}
   labels: {}
@@ -420,6 +425,14 @@ registryScanScheduler:
   # Additional volumeMounts to be mounted on the scan scheduler
   volumeMounts: []
 
+  resources:
+    requests:
+       cpu: 0.000001
+       memory: 2Mi
+    limits:
+       cpu: 0.00001
+       memory: 4Mi
+
 # opentelemetry collector
 otelCollector:
 
@@ -441,175 +454,14 @@ otelCollector:
   image:
     repository: otel/opentelemetry-collector
     tag: 0.70.0
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
   replicaCount: 1
 
   resources:
     requests:
-       cpu: 200m
-       memory: 400Mi
+       cpu: 0.01
+       memory: 50Mi
     limits:
-       cpu: 1
-       memory: 2Gi
-
-# Values for the Kubescape Storage service that Kubescape uses for its internal
-# purposes like storage
-kubescapeStorage:
-  enabled: false
-
-  # Values or the Aggregated APIServer
-  k8sApiserver:
-    name: "storage-aggregated-apiserver"
-
-    deployment:
-      labels:
-        app.kubernetes.io/name: "aggregated-apiserver"
-        app.kubernetes.io/component: "apiserver"
-        app.kubernetes.io/part-of: "kubescape-storage"
-
-      replicaCount: 1
-      image:
-        pullPolicy: "IfNotPresent"
-        repository: "vklokun/kube-sample-apiserver"
-        tag: "0.1.38"
-
-
-  # Values for the storage that backs the Aggregated APIServer
-  backingStorage:
-    deployment: 
-
-      labels:
-        app.kubernetes.io/name: "etcd"
-        app.kubernetes.io/component: "database"
-        app.kubernetes.io/part-of: "kubescape-aa-storage"
-
-      image:
-        pullPolicy: "IfNotPresent"
-        repository: "gcr.io/etcd-development/etcd"
-        tag: "v3.5.7"
-  
-nodeAgent:
-  enabled: false
-  Namespace: kubescape
-  ServiceAccount: node-agent-service-account
-  ClusterRole: node-agent-cluster-role
-  ClusterRoleBinding: node-agent-cluster-role-binding
-  ConfigMap: 
-    name: node-agent-config-map
-    maxSniffingTime: 360 #in minutes
-    updateDataPeriod: 60 #in seconds
-
-  daemonset: 
-    name: node-agent
-    automountServiceAccountToken: true
-
-  volumes:
-    - name: configmap-volume
-      configMap:
-        name: node-agent-config-map
-    - emptyDir: {}
-      name: root-falco-fs
-    - hostPath:
-        path: /boot
-        type: ""
-      name: boot-fs
-    - hostPath:
-        path: /lib/modules
-        type: ""
-      name: lib-modules
-    - hostPath:
-        path: /usr
-        type: ""
-      name: usr-fs
-    - hostPath:
-        path: /etc
-        type: ""
-      name: etc-fs
-    - hostPath:
-        path: /dev
-        type: ""
-      name: dev-fs
-    - hostPath:
-        path: /var/run/docker.sock
-        type: ""
-      name: docker-socket
-    - hostPath:
-        path: /run/containerd/containerd.sock
-        type: ""
-      name: containerd-socket
-    - hostPath:
-        path: /run/crio/crio.sock
-        type: ""
-      name: crio-socket
-    - hostPath:
-        path: /proc
-        type: ""
-      name: proc-fs
-    - hostPath:
-        path: /sys/kernel/debug
-        type: ""
-      name: debugfs
-
-  initContainer:
-    name: falco-driver-loader
-    image:
-      repository: docker.io/falcosecurity/falco-driver-loader
-      tag: 0.32.2
-      pullPolicy: IfNotPresent
-    env:
-      - name: FALCO_BPF_PROBE
-    volumeMounts:
-      - mountPath: /root/.falco
-        name: root-falco-fs
-        readOnly: false
-      - mountPath: /host/proc
-        name: proc-fs
-        readOnly: true
-      - mountPath: /host/boot
-        name: boot-fs
-        readOnly: true
-      - mountPath: /host/lib/modules
-        name: lib-modules
-      - mountPath: /host/usr
-        name: usr-fs
-        readOnly: true
-      - mountPath: /host/etc
-        name: etc-fs
-        readOnly: true
-    
-  containers:  
-    nodeAgent:
-      name: node-agent
-      image: 
-        repository: quay.io/kubescape/sniffer
-        tag: v0.1.18
-        pullPolicy: IfNotPresent
-      env:  
-        - name: SNEEFFER_CONF_FILE_PATH
-          value: "/etc/nodeAgent/configuration/"
-        - name: NodeName
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-      securityContext:
-        user: 0
-        capabilities:
-          add:
-            - name: SYS_RESOURCE
-            - name: SYS_ADMIN
-      volumeMounts:
-        - mountPath: /etc/nodeAgent/configuration
-          name: configmap-volume
-        - mountPath: /root/.falco
-          name: root-falco-fs
-        - mountPath: /host/proc
-          name: proc-fs
-        - mountPath: /sys/kernel/debug
-          name: debugfs
-        - mountPath: /host/var/run/docker.sock
-          name: docker-socket
-        - mountPath: /host/run/containerd/containerd.sock
-          name: containerd-socket
-        - mountPath: /host/run/crio/crio.sock
-          name: crio-socket
+       cpu: 0.01
+       memory: 100Mi

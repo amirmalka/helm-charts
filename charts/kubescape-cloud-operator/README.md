@@ -146,7 +146,6 @@ docker-compose logs uptrace
 | global.networkPolicy.createEgressRules | bool | `false` | Create common Egress rules for NetworkPolicies |
 | kollector.affinity | object | `{}` | Assign custom [affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) rules to the StatefulSet |
 | kollector.enabled | bool | `true` | enable/disable the kollector |
-| kollector.env[0] | object | `{"name":"PRINT_REPORT","value":"false"}` | print in verbose mode (print all reported data) |
 | kollector.image.repository | string | `"quay.io/kubescape/kollector"` | [source code](https://github.com/kubescape/kollector) |
 | kollector.nodeSelector | object | `{}` | [Node selector](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) |
 | kollector.volumes | object | `[]` | Additional volumes for the collector |
