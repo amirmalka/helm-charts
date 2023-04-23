@@ -7,10 +7,10 @@ on:
     branches: [ relevancy, relevancy-chart, main, master ]
    
 jobs:
-   
-
   helm-chart-release:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -42,4 +42,3 @@ jobs:
           # charts_repo_url: xxxxxx
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
