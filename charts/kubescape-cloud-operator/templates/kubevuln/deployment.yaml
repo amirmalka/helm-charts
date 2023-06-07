@@ -1,6 +1,7 @@
 {{- if and .Values.kubevuln.enabled .Values.kubescape.submit }}
 {{ template "account_guid" . }}
 {{ template "cluster_name" . }}
+{{- $no_proxy_envar_list := (include "no_proxy_envar_list" .) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,6 +50,7 @@ spec:
           imagePullPolicy: {{ .Values.kubevuln.image.pullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 100
           ports:
@@ -83,6 +85,12 @@ spec:
             - name: OTEL_COLLECTOR_SVC
               value: "otel-collector:4317"
             {{- end }}
+            {{- if ne .Values.global.httpsProxy ""}}
+            - name: HTTPS_PROXY
+              value: "{{ .Values.global.httpsProxy }}"
+            - name : no_proxy
+              value: "{{ $no_proxy_envar_list }}"
+            {{- end }}
           args:
             - -alsologtostderr
             - -v=4
@@ -95,18 +103,25 @@ spec:
             - name: {{ .Values.global.cloudConfig }}
               mountPath: /etc/config
               readOnly: true
-            {{- if .Values.persistence.enabled }}
             - name: "grype-db"
               mountPath: "/home/ks/.cache/grype"
-              readOnly: false
-            {{- end }}
 {{- if .Values.volumeMounts }}
 {{ toYaml .Values.volumeMounts | indent 12 }}
 {{- end }}
 {{- if .Values.kubevuln.volumeMounts }}
 {{ toYaml .Values.kubevuln.volumeMounts | indent 12 }}
 {{- end }}
+{{- if ne .Values.global.proxySecretFile ""}}
+            - name: proxy-secret
+              mountPath: /etc/ssl/certs/proxy.crt
+              subPath: proxy.crt
+{{- end }}
       volumes:
+      {{- if ne .Values.global.proxySecretFile ""}}
+        - name: proxy-secret
+          secret:
+            secretName: {{ .Values.global.proxySecretName }}
+      {{- end }}
         - name: tmp-dir
           emptyDir: {}
         - name: grype-db-cache
@@ -117,11 +132,13 @@ spec:
             items:
             - key: "clusterData"
               path: "clusterData.json"
-        {{- if .Values.persistence.enabled }}
         - name: "grype-db"
+          {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
             claimName: "{{ .Values.kubevuln.name }}"
-        {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
 {{- if .Values.volumes }}
 {{ toYaml .Values.volumes | indent 8 }}
 {{- end }}

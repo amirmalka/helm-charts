@@ -89,6 +89,9 @@ persistence:
 
 global:
   addRevisionLabel: true
+  httpsProxy: ""
+  proxySecretFile: ""
+  proxySecretName: kubescape-proxy-certificate
   namespaceTier: ks-control-plane
   cloudConfig: ks-cloud-config
   operatorServiceAccountName: ks-sa # TODO - split service account to the different components
@@ -157,7 +160,7 @@ kubescape:
   image:
     # -- source code: https://github.com/kubescape/kubescape/tree/master/httphandler (public repo)
     repository: quay.io/kubescape/kubescape
-    tag: v2.3.4
+    tag: v2.3.5
     pullPolicy: Always
 
   resources:
@@ -166,7 +169,14 @@ kubescape:
        memory: 400Mi
     limits:
        cpu: 600m
-       memory: 800Mi
+       memory: 1Gi
+
+  # -- override the default URLs when using private cloud
+  urls:
+    report: ""
+    api: ""
+    ui: ""
+    auth: ""
 
   # -- override the default URLs when using private cloud
   urls:
@@ -224,7 +234,7 @@ operator:
   image:
     # -- source code: https://github.com/kubescape/operator
     repository: quay.io/kubescape/operator
-    tag: v0.2.49-relevancy
+    tag: v0.1.21
     pullPolicy: Always
 
   service:
@@ -305,7 +315,7 @@ kubevuln:
   image:
     # -- source code: https://github.com/kubescape/kubevuln
     repository: quay.io/kubescape/kubevuln
-    tag: v0.2.83-relevancy
+    tag: v0.2.89
     pullPolicy: Always
 
   replicaCount: 1
@@ -325,10 +335,9 @@ kubevuln:
        #               https://github.com/kubescape/kubescape/issues/389
        ephemeral-storage: 5Gi
     limits:
-       cpu: 500m
+       cpu: 1000m
        memory: 5000Mi
        ephemeral-storage: 6Gi
-  
   config:
     maxImageSize: 5368709120 # set max image size for scanning, It is recommended to use the same as the requested ephemeral-storage
     scanTimeout: 5m # set timeout for scanning an image
